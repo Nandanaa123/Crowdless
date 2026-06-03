@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 // ── Splash Screen ──────────────────────────────────────────
 function SplashScreen({ onDone }) {
@@ -33,50 +35,48 @@ function SplashScreen({ onDone }) {
 
 // ── Heatmap ────────────────────────────────────────────────
 function HeatMap({ places, small = false }) {
+  const center = [25.2048, 55.2708];
+  const zoom = small ? 13 : 12;
   const height = small ? "160px" : "220px";
-  const positions = [
-    { x: "12%", y: "18%" }, { x: "37%", y: "18%" }, { x: "62%", y: "18%" },
-    { x: "87%", y: "18%" }, { x: "12%", y: "51%" }, { x: "37%", y: "51%" },
-    { x: "62%", y: "51%" }, { x: "87%", y: "51%" }
-  ];
+
+  const colorMap = {
+    green: "#22c55e",
+    yellow: "#f59e0b",
+    red: "#ef4444",
+  };
+
   return (
-    <div className="rounded-2xl overflow-hidden border border-blue-100" style={{ height }}>
-      <div className="relative h-full" style={{ background: "#e8f4f8" }}>
-        <div className="absolute w-full opacity-40" style={{ height: "1px", background: "#93c5fd", top: "33%" }}></div>
-        <div className="absolute w-full opacity-40" style={{ height: "1px", background: "#93c5fd", top: "66%" }}></div>
-        <div className="absolute h-full opacity-40" style={{ width: "1px", background: "#93c5fd", left: "25%" }}></div>
-        <div className="absolute h-full opacity-40" style={{ width: "1px", background: "#93c5fd", left: "50%" }}></div>
-        <div className="absolute h-full opacity-40" style={{ width: "1px", background: "#93c5fd", left: "75%" }}></div>
-        {[
-          { l: "2%", t: "5%", w: "21%", h: "25%" }, { l: "27%", t: "5%", w: "21%", h: "25%" },
-          { l: "52%", t: "5%", w: "21%", h: "25%" }, { l: "77%", t: "5%", w: "21%", h: "25%" },
-          { l: "2%", t: "38%", w: "21%", h: "25%" }, { l: "27%", t: "38%", w: "21%", h: "25%" },
-          { l: "52%", t: "38%", w: "21%", h: "25%" }, { l: "77%", t: "38%", w: "21%", h: "25%" },
-          { l: "2%", t: "71%", w: "21%", h: "25%" }, { l: "27%", t: "71%", w: "21%", h: "25%" },
-          { l: "52%", t: "71%", w: "21%", h: "25%" }, { l: "77%", t: "71%", w: "21%", h: "25%" },
-        ].map((b, i) => (
-          <div key={i} className="absolute rounded" style={{ left: b.l, top: b.t, width: b.w, height: b.h, background: "#dbeafe" }}></div>
+    <div style={{ height, borderRadius: "16px", overflow: "hidden", border: "1.5px solid #e0f0ff" }}>
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        style={{ height: "100%", width: "100%" }}
+        zoomControl={!small}
+        scrollWheelZoom={false}
+        dragging={!small}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+        />
+        {places.map((place) => (
+          <CircleMarker
+            key={place.id}
+            center={[place.lat, place.lng]}
+            radius={small ? 10 : place.crowd_score * 2 + 6}
+            fillColor={colorMap[place.crowd_color] || "#94a3b8"}
+            color={colorMap[place.crowd_color] || "#94a3b8"}
+            weight={2}
+            opacity={0.9}
+            fillOpacity={0.45}
+          >
+            <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+              <div style={{ fontWeight: "600", color: "#0f4c81" }}>{place.name}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>{place.crowd_label} · {place.wait_time}</div>
+            </Tooltip>
+          </CircleMarker>
         ))}
-        {places.map((place, i) => {
-          const pos = positions[i % positions.length];
-          const colorMap = { green: "#22c55e", yellow: "#f59e0b", red: "#ef4444" };
-          const color = colorMap[place.crowd_color] || "#94a3b8";
-          return (
-            <div key={place.id} className="absolute group cursor-pointer z-10"
-              style={{ left: pos.x, top: pos.y, transform: "translate(-50%,-50%)" }}>
-              <div style={{
-                width: "18px", height: "18px", borderRadius: "50%",
-                background: color, boxShadow: `0 0 0 6px ${color}33`
-              }}></div>
-              <div className="absolute bottom-full left-1/2 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none"
-                style={{ transform: "translateX(-50%)" }}>
-                {place.name} · {place.crowd_label}
-              </div>
-            </div>
-          );
-        })}
-        <div className="absolute bottom-2 right-3 text-xs font-medium" style={{ color: "#60a5fa" }}>📍 Dubai</div>
-      </div>
+      </MapContainer>
     </div>
   );
 }
