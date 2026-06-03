@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 10 !important;
+}
+
+.leaflet-control {
+    z-index: 10 !important;
+}

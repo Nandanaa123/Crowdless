@@ -33,6 +33,31 @@ function SplashScreen({ onDone }) {
   );
 }
 
+function WeatherBar({ weather }) {
+  if (!weather) return null;
+  return (
+    <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-between shadow-sm"
+      style={{
+        background: weather.indoor_recommended
+          ? "linear-gradient(135deg, #1e3a5f, #1a6bb5)"
+          : "linear-gradient(135deg, #ff9a3c, #ffb347)",
+        border: "1.5px solid #e0f0ff"
+      }}>
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{weather.emoji}</span>
+        <div>
+          <p className="font-semibold text-white text-sm">{weather.condition} · {weather.temperature}°C</p>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>{weather.tip}</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-1">
+        <span className="text-xs text-white opacity-75">💨 {weather.wind_speed} km/h</span>
+        <span className="text-xs text-white opacity-75">💧 {weather.humidity}%</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Heatmap ────────────────────────────────────────────────
 function HeatMap({ places, small = false }) {
   const center = [25.2048, 55.2708];
@@ -299,6 +324,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [weather, setWeather] = useState(null);
 
   const filters = ["all", "cafe", "park", "gym", "mall"];
 
@@ -315,7 +341,20 @@ export default function App() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPlaces("", "all"); }, []);
+  useEffect(() => {
+    fetchPlaces("", "all");
+    fetchWeather();
+  }, []);
+
+  const fetchWeather = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/weather/current");
+      const data = await res.json();
+      setWeather(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (showSplash) return <SplashScreen onDone={() => setShowSplash(false)} />;
 
@@ -369,6 +408,8 @@ export default function App() {
 
       {/* Body */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+
+        <WeatherBar weather={weather} />
 
         {/* Heatmap section */}
         <div className="rounded-2xl p-4 mb-6 shadow-sm"

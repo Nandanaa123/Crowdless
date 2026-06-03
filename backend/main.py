@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import places, ai_summary
+from routers import places, ai_summary, weather
 
 app = FastAPI(title="CrowdLess API")
 
@@ -14,7 +14,8 @@ app.add_middleware(
 
 app.include_router(places.router, prefix="/api/places", tags=["places"])
 app.include_router(ai_summary.router, prefix="/api/summary", tags=["summary"])
+app.include_router(weather.router, prefix="/api/weather", tags=["weather"])
 
 @app.get("/")
 def root():
-    return {"message": "CrowdLess API is running "}
+    return {"message": "CrowdLess API is running 🚀"}
