@@ -41,6 +41,21 @@ def get_wait_time(score):
         return "5-10 min wait"
     else:
         return "20+ min wait"
+    
+def get_hourly_crowd(place_type):
+    patterns = {
+        "cafe": [2,2,1,1,1,3,6,8,9,7,6,7,8,6,5,5,6,7,6,5,4,3,2,2],
+        "park": [1,1,1,1,1,1,2,4,6,7,6,5,6,7,8,9,8,7,5,4,3,2,1,1],
+        "gym":  [3,2,1,1,1,2,7,9,8,6,4,3,3,4,5,6,9,10,8,6,4,3,2,2],
+        "mall": [1,1,1,1,1,1,1,1,2,4,6,8,9,9,8,8,9,9,8,7,5,3,2,1],
+    }
+    return patterns.get(place_type, patterns["cafe"])
+
+def get_quiet_window(hourly):
+    min_val = min(hourly[8:22])
+    hour = hourly.index(min_val, 8, 22)
+    end = min(hour + 2, 22)
+    return f"{hour}:00 - {end}:00"
 
 @router.get("/search")
 def search_places(query: str = "", type: str = ""):
@@ -56,6 +71,8 @@ def search_places(query: str = "", type: str = ""):
                     "crowd_color": get_crowd_color(score),
                     "wait_time": get_wait_time(score),
                     "best_time": "2pm - 4pm today",
+                    "hourly_crowd": get_hourly_crowd(place["type"]),
+                    "quiet_window": get_quiet_window(get_hourly_crowd(place["type"])),
                     "top_items": ["Iced Latte", "Avocado Toast", "Cold Brew"] if place["type"] == "cafe" else [],
                 })
     results.sort(key=lambda x: x["crowd_score"])

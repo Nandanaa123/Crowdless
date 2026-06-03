@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Tooltip as LeafletTooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+
 
 // ── Splash Screen ──────────────────────────────────────────
 function SplashScreen({ onDone }) {
@@ -59,7 +61,7 @@ function WeatherBar({ weather }) {
 }
 
 // ── Heatmap ────────────────────────────────────────────────
-function HeatMap({ places, small = false }) {
+function HeatMap({ places, small = false, transport = { metro: [], buses: [] } }) {
   const center = [25.2048, 55.2708];
   const zoom = small ? 13 : 12;
   const height = small ? "160px" : "220px";
@@ -84,6 +86,7 @@ function HeatMap({ places, small = false }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
         />
+
         {places.map((place) => (
           <CircleMarker
             key={place.id}
@@ -95,16 +98,59 @@ function HeatMap({ places, small = false }) {
             opacity={0.9}
             fillOpacity={0.45}
           >
-            <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+            <LeafletTooltip direction="top" offset={[0, -10]} opacity={1}>
               <div style={{ fontWeight: "600", color: "#0f4c81" }}>{place.name}</div>
               <div style={{ fontSize: "12px", color: "#64748b" }}>{place.crowd_label} · {place.wait_time}</div>
-            </Tooltip>
+            </LeafletTooltip>
           </CircleMarker>
         ))}
+
+        {!small && transport.metro.map((station) => (
+          <CircleMarker
+            key={station.id}
+            center={[station.lat, station.lng]}
+            radius={10}
+            fillColor={colorMap[station.crowd_color] || "#94a3b8"}
+            color="white"
+            weight={2}
+            opacity={1}
+            fillOpacity={0.85}
+          >
+            <LeafletTooltip direction="top" offset={[0, -10]} opacity={1}>
+              <div style={{ fontWeight: "600", color: "#0f4c81" }}>🚇 {station.name}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>{station.line} · {station.crowd_label}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>⏱ {station.frequency}</div>
+              <div style={{ fontSize: "12px", color: "#ef4444" }}>Next peak: {station.next_peak}</div>
+            </LeafletTooltip>
+          </CircleMarker>
+        ))}
+
+        {!small && transport.buses.map((stop) => (
+          <CircleMarker
+            key={stop.id}
+            center={[stop.lat, stop.lng]}
+            radius={8}
+            fillColor={colorMap[stop.crowd_color] || "#94a3b8"}
+            color="white"
+            weight={2}
+            opacity={1}
+            fillOpacity={0.85}
+            dashArray="4"
+          >
+            <LeafletTooltip direction="top" offset={[0, -10]} opacity={1}>
+              <div style={{ fontWeight: "600", color: "#0f4c81" }}>🚌 {stop.name}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>{stop.route} · {stop.crowd_label}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>⏱ {stop.frequency}</div>
+              <div style={{ fontSize: "12px", color: "#ef4444" }}>Next peak: {stop.next_peak}</div>
+            </LeafletTooltip>
+          </CircleMarker>
+        ))}
+
       </MapContainer>
     </div>
   );
 }
+
 
 // ── Crowd Badge ────────────────────────────────────────────
 function CrowdBadge({ color, label }) {
@@ -163,6 +209,62 @@ function PlaceCard({ place, onClick }) {
   );
 }
 
+function CrowdChart({ hourly, quietWindow }) {
+  const hours = hourly.map((value, i) => ({
+    time: i === 0 ? "12am" : i === 6 ? "6am" : i === 12 ? "12pm" : i === 18 ? "6pm" : i === 23 ? "11pm" : `${i}`,
+    crowd: value,
+  }));
+
+  const getColor = (value) => {
+    if (value <= 3) return "#22c55e";
+    if (value <= 6) return "#f59e0b";
+    return "#ef4444";
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4"
+      style={{ background: "#f8fafc", border: "1.5px solid #e0f0ff" }}>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-medium" style={{ color: "#0f4c81" }}>📊 Today's Crowd Forecast</p>
+        <span className="text-xs px-2 py-1 rounded-full font-medium"
+          style={{ background: "#dcfce7", color: "#15803d" }}>
+          🕐 Quietest: {quietWindow}
+        </span>
+      </div>
+      <ResponsiveContainer width="100%" height={120}>
+        <AreaChart data={hours} margin={{ top: 5, right: 5, bottom: 0, left: -30 }}>
+          <defs>
+            <linearGradient id="crowdGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#1a6bb5" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#1a6bb5" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} domain={[0, 10]} />
+          <Tooltip
+            contentStyle={{ borderRadius: "12px", border: "1px solid #e0f0ff", fontSize: "12px" }}
+            formatter={(value) => [
+              <span style={{ color: getColor(value), fontWeight: "bold" }}>{value}/10</span>,
+              "Crowd"
+            ]}
+          />
+          <Area
+            type="monotone"
+            dataKey="crowd"
+            stroke="#1a6bb5"
+            strokeWidth={2}
+            fill="url(#crowdGradient)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      <div className="flex justify-between mt-2 text-xs" style={{ color: "#94a3b8" }}>
+        <span>🟢 Quiet 1-3</span>
+        <span>🟡 Moderate 4-6</span>
+        <span>🔴 Busy 7-10</span>
+      </div>
+    </div>
+  );
+}
 // ── Place Detail Modal ─────────────────────────────────────
 function PlaceDetail({ place, onClose }) {
   const styles = {
@@ -207,6 +309,11 @@ function PlaceDetail({ place, onClose }) {
           <p className="text-sm font-medium mb-2" style={{ color: "#0f4c81" }}>🗺 Area crowd map</p>
           <HeatMap places={[place]} small={true} />
         </div>
+        {/* Crowd chart */}
+        {place.hourly_crowd && (
+          <CrowdChart hourly={place.hourly_crowd} quietWindow={place.quiet_window} />
+        )}
+
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -325,6 +432,7 @@ export default function App() {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [weather, setWeather] = useState(null);
+  const [transport, setTransport] = useState({ metro: [], buses: [] });
 
   const filters = ["all", "cafe", "park", "gym", "mall"];
 
@@ -344,13 +452,22 @@ export default function App() {
   useEffect(() => {
     fetchPlaces("", "all");
     fetchWeather();
+    fetchTransport();
   }, []);
-
   const fetchWeather = async () => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/weather/current");
       const data = await res.json();
       setWeather(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const fetchTransport = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/transport/all");
+      const data = await res.json();
+      setTransport(data);
     } catch (err) {
       console.error(err);
     }
@@ -422,7 +539,7 @@ export default function App() {
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full inline-block" style={{ background: "#ef4444" }}></span>Busy</span>
             </div>
           </div>
-          <HeatMap places={places} />
+          <HeatMap places={places} transport={transport} />
         </div>
 
         {/* Results */}
