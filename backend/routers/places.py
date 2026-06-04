@@ -2,6 +2,54 @@ from fastapi import APIRouter
 from typing import List
 import random
 
+VIBE_PROFILES = {
+    "bookworm": {
+        "title": "The Quiet Bookworm 📚",
+        "description": "You love silent, cozy spots perfect for reading or deep work",
+        "preferred_types": ["cafe"],
+        "preferred_vibe": "quiet",
+        "max_crowd_score": 4,
+        "color": "#6366f1",
+        "emoji": "📚"
+    },
+    "music_lover": {
+        "title": "The Music Lover 🎵",
+        "description": "You enjoy places with great ambiance and a good playlist",
+        "preferred_types": ["cafe", "mall"],
+        "preferred_vibe": "moderate",
+        "max_crowd_score": 7,
+        "color": "#ec4899",
+        "emoji": "🎵"
+    },
+    "nature_soul": {
+        "title": "The Nature Soul 🌿",
+        "description": "You recharge outdoors — fresh air and open spaces are your thing",
+        "preferred_types": ["park"],
+        "preferred_vibe": "quiet",
+        "max_crowd_score": 5,
+        "color": "#22c55e",
+        "emoji": "🌿"
+    },
+    "fitness_freak": {
+        "title": "The Fitness Freak 💪",
+        "description": "You're always on the move — gyms and active spots are your home",
+        "preferred_types": ["gym"],
+        "preferred_vibe": "moderate",
+        "max_crowd_score": 6,
+        "color": "#f59e0b",
+        "emoji": "💪"
+    },
+    "social_butterfly": {
+        "title": "The Social Butterfly 🦋",
+        "description": "You love being around people and discovering buzzing new spots",
+        "preferred_types": ["mall", "cafe"],
+        "preferred_vibe": "moderate",
+        "max_crowd_score": 8,
+        "color": "#ff9a3c",
+        "emoji": "🦋"
+    }
+}
+
 router = APIRouter()
 
 MOCK_PLACES = [

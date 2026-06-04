@@ -35,6 +35,171 @@ function SplashScreen({ onDone }) {
   );
 }
 
+const QUIZ_QUESTIONS = [
+  {
+    id: 1,
+    question: "What's your ideal Sunday? ☀️",
+    options: [
+      { label: "Reading in a cozy corner", emoji: "📚", value: "bookworm" },
+      { label: "Listening to music and chilling", emoji: "🎵", value: "music_lover" },
+      { label: "Hiking or park walks", emoji: "🌿", value: "nature_soul" },
+      { label: "Working out or staying active", emoji: "💪", value: "fitness_freak" },
+    ]
+  },
+  {
+    id: 2,
+    question: "Your perfect drink? ☕",
+    options: [
+      { label: "A quiet cup of coffee", emoji: "☕", value: "bookworm" },
+      { label: "Something fancy and aesthetic", emoji: "🧋", value: "music_lover" },
+      { label: "Fresh juice or smoothie", emoji: "🥤", value: "nature_soul" },
+      { label: "Energy drink or protein shake", emoji: "⚡", value: "fitness_freak" },
+    ]
+  },
+  {
+    id: 3,
+    question: "What vibe are you looking for? ✨",
+    options: [
+      { label: "Silent and focused", emoji: "🤫", value: "bookworm" },
+      { label: "Lively with good music", emoji: "🎶", value: "music_lover" },
+      { label: "Fresh air and open space", emoji: "🌳", value: "nature_soul" },
+      { label: "Energetic and motivating", emoji: "🔥", value: "fitness_freak" },
+    ]
+  },
+  {
+    id: 4,
+    question: "You usually go out? 👥",
+    options: [
+      { label: "Alone — me time", emoji: "🧘", value: "bookworm" },
+      { label: "With friends", emoji: "👯", value: "social_butterfly" },
+      { label: "With family", emoji: "👨‍👩‍👧", value: "nature_soul" },
+      { label: "With a workout buddy", emoji: "🤝", value: "fitness_freak" },
+    ]
+  }
+];
+
+function QuizScreen({ onDone }) {
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [showResult, setShowResult] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAnswer = (value) => {
+    const newAnswers = [...answers, value];
+    setAnswers(newAnswers);
+    if (current < QUIZ_QUESTIONS.length - 1) {
+      setCurrent(current + 1);
+    } else {
+      // Calculate vibe
+      const counts = newAnswers.reduce((acc, v) => {
+        acc[v] = (acc[v] || 0) + 1;
+        return acc;
+      }, {});
+      const vibe = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+      fetchProfile(vibe);
+    }
+  };
+
+  const fetchProfile = async (vibe) => {
+    setLoading(true);
+    const profiles = {
+      bookworm: { title: "The Quiet Bookworm", description: "You love silent cozy spots!", emoji: "📚", color: "#6366f1" },
+      music_lover: { title: "The Music Lover", description: "You enjoy great ambiance!", emoji: "🎵", color: "#ec4899" },
+      nature_soul: { title: "The Nature Soul", description: "Fresh air is your thing!", emoji: "🌿", color: "#22c55e" },
+      fitness_freak: { title: "The Fitness Freak", description: "Always on the move!", emoji: "💪", color: "#f59e0b" },
+      social_butterfly: { title: "The Social Butterfly", description: "You love buzzing spots!", emoji: "🦋", color: "#ff9a3c" },
+    };
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/places/recommendations/${vibe}`);
+      const data = await res.json();
+      setProfile(data.profile || profiles[vibe] || profiles.bookworm);
+    } catch (err) {
+      setProfile(profiles[vibe] || profiles.bookworm);
+    }
+    setShowResult(true);
+    setLoading(false);
+  };
+
+  const q = QUIZ_QUESTIONS[current];
+  const progress = ((current) / QUIZ_QUESTIONS.length) * 100;
+
+  if (loading) return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center z-50"
+      style={{ background: "linear-gradient(135deg, #0f4c81, #1a6bb5)" }}>
+      <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin mb-4"
+        style={{ borderColor: "white", borderTopColor: "transparent" }}></div>
+      <p className="text-white">Finding your vibe...</p>
+    </div>
+  );
+
+  if (showResult && profile) return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center z-50 p-6"
+      style={{ background: "linear-gradient(135deg, #0f4c81, #1a6bb5)" }}>
+      <div className="w-full max-w-sm text-center">
+        <div className="text-7xl mb-4">{profile.emoji}</div>
+        <h2 className="text-3xl font-bold text-white mb-2">{profile.title}</h2>
+        <p className="text-blue-200 mb-8">{profile.description}</p>
+        <div className="rounded-2xl p-4 mb-6"
+          style={{ background: "rgba(255,255,255,0.15)" }}>
+          <p className="text-white text-sm">We'll show you places that match your vibe — sorted by crowd level just for you! 🌿</p>
+        </div>
+        <button onClick={() => onDone(profile)}
+          className="w-full py-4 rounded-2xl font-bold text-lg"
+          style={{ background: "linear-gradient(135deg, #ff9a3c, #ffb347)", color: "white" }}>
+          Find My Places →
+        </button>
+        <button onClick={() => { setCurrent(0); setAnswers([]); setShowResult(false); setProfile(null); }}
+          className="mt-3 text-blue-200 text-sm underline">
+          Retake quiz
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 flex flex-col z-50 p-6"
+      style={{ background: "linear-gradient(135deg, #0f4c81, #1a6bb5)" }}>
+
+      {/* Progress */}
+      <div className="mb-8">
+        <div className="flex justify-between text-blue-200 text-sm mb-2">
+          <span>Question {current + 1} of {QUIZ_QUESTIONS.length}</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="w-full rounded-full h-2" style={{ background: "rgba(255,255,255,0.2)" }}>
+          <div className="h-2 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%`, background: "linear-gradient(135deg, #ff9a3c, #ffb347)" }}>
+          </div>
+        </div>
+      </div>
+
+      {/* Question */}
+      <div className="flex-1 flex flex-col justify-center">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
+          style={{ background: "linear-gradient(135deg, #ff9a3c, #ffb347)" }}>
+          <span className="text-3xl">🌿</span>
+        </div>
+        <h2 className="text-2xl font-bold text-white text-center mb-8">{q.question}</h2>
+        <div className="flex flex-col gap-3">
+          {q.options.map((opt, i) => (
+            <button key={i} onClick={() => handleAnswer(opt.value)}
+              className="w-full py-4 px-5 rounded-2xl text-left flex items-center gap-4 transition-all duration-200"
+              style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}>
+              <span className="text-2xl">{opt.emoji}</span>
+              <span className="font-medium">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-center text-blue-300 text-xs mt-6">CrowdLess — Find your calm place ✨</p>
+    </div>
+  );
+}
+
 function WeatherBar({ weather }) {
   if (!weather) return null;
   return (
@@ -426,6 +591,8 @@ function Chatbot() {
 // ── Main App ───────────────────────────────────────────────
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -473,7 +640,8 @@ export default function App() {
     }
   };
 
-  if (showSplash) return <SplashScreen onDone={() => setShowSplash(false)} />;
+  if (showSplash) return <SplashScreen onDone={() => { setShowSplash(false); setShowQuiz(true); }} />;
+  if (showQuiz) return <QuizScreen onDone={(profile) => { setUserProfile(profile); setShowQuiz(false); }} />;
 
   return (
     <div className="min-h-screen" style={{ background: "#f0f7ff" }}>
@@ -551,6 +719,16 @@ export default function App() {
           </div>
         ) : (
           <>
+            {userProfile && (
+              <div className="rounded-2xl px-4 py-3 mb-4 flex items-center gap-3"
+                style={{ background: userProfile.color + "22", border: `1.5px solid ${userProfile.color}44` }}>
+                <span className="text-2xl">{userProfile.emoji}</span>
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: userProfile.color }}>{userProfile.title}</p>
+                  <p className="text-xs" style={{ color: "#64748b" }}>Showing places matched to your vibe</p>
+                </div>
+              </div>
+            )}
             <p className="text-sm mb-4" style={{ color: "#94a3b8" }}>
               {places.length} places found — sorted by quietest first 🌿
             </p>
