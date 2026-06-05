@@ -225,6 +225,44 @@ function WeatherBar({ weather }) {
   );
 }
 
+function ActivitySuggestion({ weather, onExplore }) {
+  if (!weather?.activity) return null;
+  return (
+    <div className="rounded-2xl p-4 mb-4 cursor-pointer transition-all duration-200"
+      style={{
+        background: "linear-gradient(135deg, #0f4c81, #1a6bb5)",
+        border: "1.5px solid #1a6bb5"
+      }}
+      onClick={() => onExplore(weather.activity.place_type)}
+      onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+      onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <p className="text-xs font-medium mb-1" style={{ color: "#93c5fd" }}>
+            ✨ Suggested for you right now
+          </p>
+          <p className="font-bold text-white text-base mb-1">
+            {weather.activity.suggestion}
+          </p>
+          <p className="text-sm" style={{ color: "#bfdbfe" }}>
+            {weather.activity.reason}
+          </p>
+        </div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(255,255,255,0.15)" }}>
+          <span className="text-xl">{weather.emoji}</span>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-xs font-semibold px-3 py-1 rounded-full"
+          style={{ background: "linear-gradient(135deg, #ff9a3c, #ffb347)", color: "white" }}>
+          Find quiet {weather.activity.place_type}s nearby →
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Heatmap ────────────────────────────────────────────────
 function HeatMap({ places, small = false, transport = { metro: [], buses: [] } }) {
   const center = [25.2048, 55.2708];
@@ -593,6 +631,11 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [showQuiz, setShowQuiz] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const handleActivityExplore = (placeType) => {
+    setActiveFilter(placeType);
+    fetchPlaces("", placeType);
+    window.scrollTo({ top: 500, behavior: "smooth" });
+  };
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -695,6 +738,7 @@ export default function App() {
       <div className="max-w-2xl mx-auto px-4 py-6">
 
         <WeatherBar weather={weather} />
+        <ActivitySuggestion weather={weather} onExplore={handleActivityExplore} />
 
         {/* Heatmap section */}
         <div className="rounded-2xl p-4 mb-6 shadow-sm"
