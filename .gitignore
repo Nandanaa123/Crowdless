@@ -2,6 +2,7 @@
 backend/__pycache__/
 backend/*.pyc
 backend/.env
+backend/crowdless.db
 
 # Node
 frontend/node_modules/
