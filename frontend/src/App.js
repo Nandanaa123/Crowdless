@@ -3,6 +3,131 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip as LeafletTooltip } from
 import "leaflet/dist/leaflet.css";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
+// ── Auth Screen ────────────────────────────────────────────
+function AuthScreen({ onDone }) {
+  const [mode, setMode] = useState("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handle = async () => {
+    setError("");
+    if (!email || !password || (mode === "signup" && !name)) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/auth/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || "Something went wrong");
+      } else {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        onDone(data.user);
+      }
+    } catch {
+      setError("Cannot connect to server");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center z-50 p-6"
+      style={{ background: COLORS.bg }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md"
+            style={{ background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}>
+            <span className="text-3xl">🌿</span>
+          </div>
+          <h1 className="text-3xl font-bold" style={{ color: COLORS.textDark, fontFamily: "monospace" }}>CrowdLess</h1>
+          <p className="text-sm mt-1" style={{ color: COLORS.textLight, fontFamily: "monospace" }}>find your calm place ✨</p>
+        </div>
+
+        <div className="rounded-2xl p-6 shadow-sm"
+          style={{ background: COLORS.bgCard, border: `2px solid ${COLORS.border}` }}>
+          <div className="flex gap-2 mb-6">
+            {["login", "signup"].map(m => (
+              <button key={m} onClick={() => { setMode(m); setError(""); }}
+                className="flex-1 py-2 rounded-xl font-bold text-sm transition-all"
+                style={{
+                  background: mode === m ? `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` : COLORS.bg,
+                  color: mode === m ? "white" : COLORS.textDark,
+                  border: `2px solid ${mode === m ? COLORS.primaryDark : COLORS.border}`,
+                  fontFamily: "monospace"
+                }}>
+                {m}
+              </button>
+            ))}
+          </div>
+
+          {mode === "signup" && (
+            <div className="mb-3">
+              <label className="text-xs font-bold mb-1 block" style={{ color: COLORS.textDark, fontFamily: "monospace" }}>your name</label>
+              <input value={name} onChange={e => setName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                style={{ background: COLORS.bg, color: COLORS.textDark, border: `2px solid ${COLORS.border}`, fontFamily: "monospace" }}
+                onFocus={e => e.target.style.borderColor = COLORS.primary}
+                onBlur={e => e.target.style.borderColor = COLORS.border} />
+            </div>
+          )}
+
+          <div className="mb-3">
+            <label className="text-xs font-bold mb-1 block" style={{ color: COLORS.textDark, fontFamily: "monospace" }}>email</label>
+            <input value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="you@email.com" type="email"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={{ background: COLORS.bg, color: COLORS.textDark, border: `2px solid ${COLORS.border}`, fontFamily: "monospace" }}
+              onFocus={e => e.target.style.borderColor = COLORS.primary}
+              onBlur={e => e.target.style.borderColor = COLORS.border} />
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs font-bold mb-1 block" style={{ color: COLORS.textDark, fontFamily: "monospace" }}>password</label>
+            <input value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="min 6 characters" type="password"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={{ background: COLORS.bg, color: COLORS.textDark, border: `2px solid ${COLORS.border}`, fontFamily: "monospace" }}
+              onFocus={e => e.target.style.borderColor = COLORS.primary}
+              onBlur={e => e.target.style.borderColor = COLORS.border}
+              onKeyDown={e => e.key === "Enter" && handle()} />
+          </div>
+
+          {error && (
+            <div className="rounded-xl px-3 py-2 mb-3 text-sm"
+              style={{ background: "#fce8e0", color: "#803828", border: "1.5px solid #e8a090" }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button onClick={handle} disabled={loading}
+            className="w-full py-3 rounded-xl font-bold text-white transition-all"
+            style={{ background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, fontFamily: "monospace", opacity: loading ? 0.7 : 1 }}>
+            {loading ? "please wait..." : mode === "login" ? "login →" : "create account →"}
+          </button>
+        </div>
+
+        <p className="text-center text-xs mt-4" style={{ color: COLORS.textLight, fontFamily: "monospace" }}>
+          your data is safe with us 🔒
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const COLORS = {
   primary: "#f9a86c",
   primaryDark: "#e8924a",
@@ -501,16 +626,34 @@ function PlaceDetail({ place, onClose }) {
 function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { from: "bot", text: "Hi! 👋 I'm your CrowdLess assistant. Ask me anything like 'Where's quiet right now?' or 'Best cafe with no wait?'" }
+    { from: "bot", text: "Hi! 👋 I'm your CrowdLess AI assistant. Ask me anything like 'Where's quiet right now?' or 'Best cafe with no wait?'" }
   ]);
   const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const messagesEndRef = useState(null);
 
-  const send = () => {
-    if (!input.trim()) return;
+  const send = async () => {
+    if (!input.trim() || typing) return;
     const userMsg = { from: "user", text: input };
-    const botMsg = { from: "bot", text: "Based on current crowd data, I'd suggest checking the Quiet places in the list — they have the lowest crowd score right now. 🌿" };
-    setMessages(prev => [...prev, userMsg, botMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setInput("");
+    setTyping(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/chatbot/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input,
+          history: messages
+        })
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { from: "bot", text: data.reply }]);
+    } catch {
+      setMessages(prev => [...prev, { from: "bot", text: "Sorry, I'm having trouble connecting right now. 🌿" }]);
+    }
+    setTyping(false);
   };
 
   return (
@@ -524,12 +667,12 @@ function Chatbot() {
               <span className="text-xl">🤖</span>
               <div>
                 <p className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>CrowdLess AI</p>
-                <p className="text-xs" style={{ color: COLORS.bg }}>always here to help</p>
+                <p className="text-xs" style={{ color: COLORS.bg }}>powered by Gemini ✨</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="text-white text-xl font-light">×</button>
           </div>
-          <div className="p-3 flex flex-col gap-2 overflow-y-auto" style={{ height: "220px" }}>
+          <div className="p-3 flex flex-col gap-2 overflow-y-auto" style={{ height: "260px" }}>
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
                 <div className="px-3 py-2 rounded-2xl text-sm max-w-xs"
@@ -542,6 +685,14 @@ function Chatbot() {
                 </div>
               </div>
             ))}
+            {typing && (
+              <div className="flex justify-start">
+                <div className="px-3 py-2 rounded-2xl text-sm"
+                  style={{ background: COLORS.bg, border: `1.5px solid ${COLORS.border}`, color: COLORS.textLight }}>
+                  typing...
+                </div>
+              </div>
+            )}
           </div>
           <div className="p-3 flex gap-2" style={{ borderTop: `2px solid ${COLORS.border}` }}>
             <input value={input} onChange={e => setInput(e.target.value)}
@@ -549,8 +700,9 @@ function Chatbot() {
               placeholder="ask me anything..."
               className="flex-1 text-sm px-3 py-2 rounded-xl outline-none"
               style={{ background: COLORS.bg, color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, fontFamily: "monospace" }} />
-            <button onClick={send} className="px-3 py-2 rounded-xl text-white font-bold text-sm"
-              style={{ background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}>
+            <button onClick={send}
+              className="px-3 py-2 rounded-xl text-white font-bold text-sm"
+              style={{ background: typing ? COLORS.border : `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}>
               →
             </button>
           </div>
@@ -564,12 +716,16 @@ function Chatbot() {
     </>
   );
 }
-
 // ── Main App ───────────────────────────────────────────────
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -619,7 +775,19 @@ export default function App() {
     fetchTransport();
   }, []);
 
-  if (showSplash) return <SplashScreen onDone={() => { setShowSplash(false); setShowQuiz(true); }} />;
+  if (showSplash) return <SplashScreen onDone={() => {
+    setShowSplash(false);
+    if (currentUser) {
+      setShowQuiz(true);
+    } else {
+      setShowAuth(true);
+    }
+  }} />;
+  if (showAuth) return <AuthScreen onDone={(user) => {
+    setCurrentUser(user);
+    setShowAuth(false);
+    setShowQuiz(true);
+  }} />;
   if (showQuiz) return <QuizScreen onDone={(profile) => { setUserProfile(profile); setShowQuiz(false); }} />;
 
   return (
@@ -638,13 +806,27 @@ export default function App() {
               <h1 className="text-xl font-bold" style={{ color: COLORS.textDark, fontFamily: "monospace" }}>CrowdLess</h1>
               <p className="text-xs" style={{ color: COLORS.textLight, fontFamily: "monospace" }}>find your calm place ✨</p>
             </div>
-            {userProfile && (
-              <div className="ml-auto flex items-center gap-2 px-3 py-1 rounded-full"
-                style={{ background: COLORS.bg, border: `1.5px solid ${COLORS.border}` }}>
-                <span>{userProfile.emoji}</span>
-                <span className="text-xs font-medium" style={{ color: COLORS.textDark }}>{userProfile.title}</span>
-              </div>
-            )}
+            <div className="ml-auto flex items-center gap-2">
+              {userProfile && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full"
+                  style={{ background: COLORS.bg, border: `1.5px solid ${COLORS.border}` }}>
+                  <span>{userProfile.emoji}</span>
+                  <span className="text-xs font-medium" style={{ color: COLORS.textDark }}>{userProfile.title}</span>
+                </div>
+              )}
+              {currentUser && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full"
+                  style={{ background: COLORS.bg, border: `1.5px solid ${COLORS.border}` }}>
+                  <span className="text-xs font-medium" style={{ color: COLORS.textDark }}>👤 {currentUser.name}</span>
+                  <button onClick={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    setCurrentUser(null);
+                    setShowAuth(true);
+                  }} className="text-xs" style={{ color: COLORS.textLight }}>logout</button>
+                </div>
+              )}
+            </div>
           </div>
           <form onSubmit={e => { e.preventDefault(); fetchPlaces(query, activeFilter); }}
             className="flex gap-2">
