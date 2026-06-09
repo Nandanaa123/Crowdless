@@ -109,3 +109,21 @@ def get_me(token: str, db: Session = Depends(get_db)):
         }
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+@router.post("/update-vibe")
+
+def update_vibe(body: dict, db: Session = Depends(get_db)):
+    try:
+        token = body.get("token", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.vibe = body.get("vibe", user.vibe)
+        user.vibe_emoji = body.get("vibe_emoji", user.vibe_emoji)
+        user.vibe_title = body.get("vibe_title", user.vibe_title)
+        db.commit()
+        return {"success": True}
+    except:
+        raise HTTPException(status_code=401, detail="Invalid token")

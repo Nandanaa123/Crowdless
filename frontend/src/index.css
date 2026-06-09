@@ -11,8 +11,28 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    background: #fdf6ee;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Nunito', sans-serif;
+}
+
+body.light {
+    background: #f0fbff;
+}
+
+body.dark {
+    background: #0c1a2e;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0ea5e9;
+    border-radius: 10px;
 }
 
 .leaflet-pane,
@@ -23,19 +43,6 @@ body {
 
 .leaflet-control {
     z-index: 10 !important;
-}
-
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #fdf6ee;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #f9a86c;
-    border-radius: 10px;
 }
 
 @keyframes fadeIn {
@@ -75,6 +82,16 @@ body {
     100% {
         transform: scale(1);
         opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
     }
 }
 
