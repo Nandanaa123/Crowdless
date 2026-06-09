@@ -609,6 +609,7 @@ function TripPlanner({ C, onClose, weather }) {
   const [answers, setAnswers] = useState({});
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const questions = [
     {
@@ -708,6 +709,177 @@ function TripPlanner({ C, onClose, weather }) {
     </div>
   );
 
+  const TRANSPORT = {
+    beach: "🚌 Bus Route 8 or 🚕 Taxi (~15 mins)",
+    museum: "🚇 Metro Red Line or 🚌 Bus (~20 mins)",
+    cafe: "🚕 Taxi or 🚶 Walk (~10 mins)",
+    park: "🚌 Bus or 🚕 Taxi (~15 mins)",
+    restaurant: "🚶 Walk or 🚕 Taxi (~10 mins)",
+    gym: "🚇 Metro or 🚕 Taxi (~20 mins)",
+    mall: "🚇 Metro Red Line (~25 mins)",
+    wellness: "🚕 Taxi (~20 mins)",
+  };
+
+  if (showMap && plan) return (
+    <div className="fixed inset-0 z-50 slide-up" style={{ background: C.bg, overflowY: "auto" }}>
+      <div style={{ background: C.primaryGrad, padding: "20px 16px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <button onClick={() => setShowMap(false)}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "10px", padding: "8px 14px", color: "white", cursor: "pointer", fontFamily: "Nunito", fontWeight: "800", fontSize: "13px" }}>
+            ← back
+          </button>
+          <button onClick={onClose}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "10px", padding: "8px 14px", color: "white", cursor: "pointer", fontFamily: "Nunito", fontWeight: "800", fontSize: "13px" }}>
+            done ✓
+          </button>
+        </div>
+        <h2 style={{ fontFamily: "Pacifico, cursive", fontSize: "24px", color: "white", margin: "0 0 4px" }}>your route 🗺️</h2>
+        <p style={{ color: "rgba(255,255,255,0.8)", fontFamily: "Nunito", fontSize: "12px", margin: 0 }}>optimized crowd-free path ✨</p>
+      </div>
+
+      <div style={{ padding: "16px" }}>
+
+        {/* Weather card */}
+        {weather && (
+          <div style={{ background: C.bgCard, borderRadius: "16px", padding: "14px", marginBottom: "16px", border: `2px solid ${C.border}`, display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "32px" }}>{weather.emoji}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: "800", color: C.text, fontFamily: "Nunito", margin: "0 0 2px", fontSize: "14px" }}>today's weather</p>
+              <p style={{ fontWeight: "700", color: C.textMid, fontFamily: "Nunito", margin: "0 0 2px", fontSize: "13px" }}>{weather.condition} · {weather.temperature}°C</p>
+              <p style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito", margin: 0 }}>💨 {weather.wind_speed} km/h · 💧 {weather.humidity}%</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ padding: "4px 10px", borderRadius: "10px", background: weather.indoor_recommended ? "#fee2e2" : "#dcfce7", fontSize: "11px", fontWeight: "800", fontFamily: "Nunito", color: weather.indoor_recommended ? "#991b1b" : "#166534" }}>
+                {weather.indoor_recommended ? "🏠 stay indoor" : "🌿 great outdoor"}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Real Map */}
+        <div style={{ borderRadius: "16px", overflow: "hidden", border: `2px solid ${C.border}`, marginBottom: "16px", height: "250px" }}>
+          <MapContainer
+            center={[plan[0].lat || 25.2048, plan[0].lng || 55.2708]}
+            zoom={12}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={false}>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors' />
+            {plan.map((stop, i) => {
+              const coords = {
+                "Kite Beach": [25.1551, 55.1936],
+                "JBR Beach": [25.0777, 55.1298],
+                "La Mer Beach": [25.2197, 55.2627],
+                "Sunset Beach": [25.1234, 55.1456],
+                "Dubai Museum": [25.2632, 55.2976],
+                "Dubai Frame": [25.2351, 55.3005],
+                "Etihad Museum": [25.2285, 55.2734],
+                "Coffee Museum": [25.2634, 55.2978],
+                "Al Fahidi Historic District": [25.2634, 55.2978],
+                "Creek Park": [25.2285, 55.3275],
+                "Al Safa Park": [25.1890, 55.2364],
+                "Zabeel Park": [25.2307, 55.3024],
+                "Mushrif Park": [25.2614, 55.4197],
+                "Ravi Restaurant": [25.2334, 55.2785],
+                "Arabian Tea House": [25.2634, 55.2978],
+                "Operation Falafel": [25.2048, 55.2708],
+                "Nightjar Coffee": [25.2112, 55.2698],
+                "% Arabica": [25.1985, 55.2765],
+                "Sip & Work": [25.2035, 55.2695],
+              };
+              const pos = coords[stop.place] || [25.2048 + i * 0.01, 55.2708 + i * 0.01];
+              const crowdColorMap = { green: "#22c55e", yellow: "#eab308", red: "#ef4444" };
+              return (
+                <CircleMarker key={i} center={pos}
+                  radius={14}
+                  fillColor={crowdColorMap[stop.crowd]}
+                  color="white"
+                  weight={3}
+                  fillOpacity={0.9}>
+                  <LeafletTooltip direction="top" permanent={false} opacity={1}>
+                    <div style={{ fontWeight: "800", color: "#0369a1", fontFamily: "Nunito" }}>
+                      {i + 1}. {stop.place}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", fontFamily: "Nunito" }}>
+                      {stop.time} · {stop.crowd === "green" ? "🟢 quiet" : stop.crowd === "yellow" ? "🟡 moderate" : "🔴 busy"}
+                    </div>
+                  </LeafletTooltip>
+                </CircleMarker>
+              );
+            })}
+          </MapContainer>
+        </div>
+
+        {/* Route stops with transport */}
+        <p style={{ fontWeight: "800", color: C.text, fontFamily: "Nunito", fontSize: "15px", marginBottom: "12px" }}>🚏 route details</p>
+        {plan.map((stop, i) => {
+          const crowdColors = {
+            green: { bg: "#dcfce7", text: "#166534", dot: "#22c55e" },
+            yellow: { bg: "#fef9c3", text: "#854d0e", dot: "#eab308" },
+            red: { bg: "#fee2e2", text: "#991b1b", dot: "#ef4444" },
+          };
+          const cc = crowdColors[stop.crowd];
+          return (
+            <div key={i}>
+              {/* Stop card */}
+              <div style={{ background: C.bgCard, borderRadius: "16px", padding: "14px", border: `2px solid ${C.border}`, display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: C.primaryGrad, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "Nunito", fontWeight: "900", fontSize: "16px", flexShrink: 0 }}>
+                  {i + 1}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <p style={{ fontWeight: "900", color: C.text, fontFamily: "Nunito", margin: "0 0 2px", fontSize: "14px" }}>{stop.place}</p>
+                    <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: "800", background: cc.bg, color: cc.text, fontFamily: "Nunito", flexShrink: 0, marginLeft: "8px" }}>
+                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: cc.dot, display: "inline-block", marginRight: "4px" }}></span>
+                      {stop.crowd === "green" ? "quiet" : stop.crowd === "yellow" ? "moderate" : "busy"}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: C.textMid, fontFamily: "Nunito", margin: "0 0 4px", fontWeight: "700" }}>⏰ {stop.time}</p>
+                  <p style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito", margin: 0 }}>💡 {stop.tip}</p>
+                </div>
+              </div>
+
+              {/* Transport between stops */}
+              {i < plan.length - 1 && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", margin: "4px 0" }}>
+                  <div style={{ width: "2px", height: "30px", background: C.border, marginLeft: "17px" }}></div>
+                  <div style={{ background: C.bgDeep, borderRadius: "10px", padding: "6px 12px", border: `1px solid ${C.border}`, flex: 1 }}>
+                    <p style={{ fontSize: "11px", color: C.textMid, fontFamily: "Nunito", fontWeight: "700", margin: 0 }}>
+                      {TRANSPORT[stop.type] || "🚕 Taxi or 🚶 Walk (~10 mins)"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Public transport tips */}
+        <div style={{ background: C.bgCard, borderRadius: "16px", padding: "14px", border: `2px solid ${C.border}`, marginTop: "12px", marginBottom: "12px" }}>
+          <p style={{ fontWeight: "800", color: C.text, fontFamily: "Nunito", fontSize: "14px", margin: "0 0 10px" }}>🚇 public transport tips</p>
+          {[
+            { emoji: "🚇", tip: "Metro runs 5:30am - midnight (Fri: 10am start)" },
+            { emoji: "🚌", tip: "Buses cover most areas — check RTA app for routes" },
+            { emoji: "💳", tip: "Get a Nol card — works on metro, bus and tram" },
+            { emoji: "⏰", tip: "Avoid metro 7-9am and 5-8pm peak hours" },
+            { emoji: "🌡️", tip: weather?.temperature > 35 ? "Very hot today — use air-conditioned transport!" : "Good weather for short walks between stops!" },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "6px 0", borderBottom: i < 4 ? `1px solid ${C.border}` : "none" }}>
+              <span style={{ fontSize: "16px" }}>{item.emoji}</span>
+              <p style={{ fontSize: "12px", color: C.textMid, fontFamily: "Nunito", fontWeight: "600", margin: 0 }}>{item.tip}</p>
+            </div>
+          ))}
+        </div>
+
+        <button onClick={onClose}
+          className="w-full py-3 rounded-xl font-bold text-white"
+          style={{ background: C.primaryGrad, fontFamily: "Nunito", fontSize: "15px", border: "none", cursor: "pointer" }}>
+          start my trip! 🚀
+        </button>
+      </div>
+    </div>
+  );
+
   if (plan) return (
     <div className="fixed inset-0 z-50 slide-up" style={{ background: C.bg, overflowY: "auto" }}>
       <div style={{ background: C.primaryGrad, padding: "20px 16px 30px" }}>
@@ -764,10 +936,10 @@ function TripPlanner({ C, onClose, weather }) {
           );
         })}
 
-        <button onClick={onClose}
+        <button onClick={() => setShowMap(true)}
           className="w-full py-3 rounded-xl font-bold text-white mt-2"
           style={{ background: C.primaryGrad, fontFamily: "Nunito", fontSize: "15px", border: "none", cursor: "pointer" }}>
-          let's go! 🚀
+          let's go! 🗺️
         </button>
       </div>
     </div>
@@ -919,8 +1091,6 @@ function ProfilePage({ C, currentUser, userProfile, onRetakeQuiz, onTripPlanner,
         </button>
       </div>
 
-
-
       <button onClick={onLogout}
         className="w-full py-3 rounded-xl font-bold text-white"
         style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", fontFamily: "Nunito", fontSize: "15px", border: "none", cursor: "pointer" }}>
@@ -930,8 +1100,6 @@ function ProfilePage({ C, currentUser, userProfile, onRetakeQuiz, onTripPlanner,
 
   );
 }
-
-
 
 // ── Chatbot ────────────────────────────────────────────────
 function Chatbot({ C }) {
@@ -1039,6 +1207,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeCost, setActiveCost] = useState("");
