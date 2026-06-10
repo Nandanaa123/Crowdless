@@ -10,7 +10,7 @@ create_tables()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*", "https://crowdless-puk.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
