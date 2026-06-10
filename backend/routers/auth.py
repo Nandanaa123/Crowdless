@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import hashlib
+import secrets
 from jose import jwt
 from datetime import datetime, timedelta
 from database import get_db, User
@@ -12,13 +13,17 @@ SECRET_KEY = "crowdless-secret-key-2024"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 def hash_password(password: str):
-    return pwd_context.hash(password)
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
+    return f"{salt}:{hashed}"
 
 def verify_password(plain: str, hashed: str):
-    return pwd_context.verify(plain, hashed)
+    try:
+        salt, hash_val = hashed.split(":")
+        return hashlib.sha256((plain + salt).encode()).hexdigest() == hash_val
+    except:
+        return False
 
 def create_token(data: dict):
     expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
