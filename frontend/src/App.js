@@ -1207,7 +1207,6 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showMap, setShowMap] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeCost, setActiveCost] = useState("");
