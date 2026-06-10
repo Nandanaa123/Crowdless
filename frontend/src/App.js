@@ -129,7 +129,7 @@ function AuthScreen({ onDone, C }) {
     if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
     setLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/auth/${mode}`, {
+      const res = await fetch(`https://crowdless-30a6.onrender.com/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
@@ -246,7 +246,7 @@ function QuizScreen({ onDone, C }) {
       social_butterfly: { title: "The Social Butterfly", description: "You love buzzing new spots!", emoji: "🦋", color: "#8b5cf6" },
     };
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/places/recommendations/${vibe}`);
+      const res = await fetch(`https://crowdless-30a6.onrender.com/api/places/recommendations/${vibe}`);
       const data = await res.json();
       setProfile(data.profile || profiles[vibe]);
     } catch { setProfile(profiles[vibe] || profiles.bookworm); }
@@ -1117,7 +1117,7 @@ function Chatbot({ C }) {
     setInput("");
     setTyping(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/chatbot/message", {
+      const res = await fetch("https://crowdless-30a6.onrender.com/api/chatbot/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input, history: messages })
@@ -1224,7 +1224,7 @@ export default function App() {
     setLoading(true);
     try {
       const typeParam = type === "all" ? "" : type;
-      const res = await fetch(`http://127.0.0.1:8000/api/places/search?query=${searchQuery}&type=${typeParam}&cost=${cost}`);
+      const res = await fetch(`https://crowdless-30a6.onrender.com/api/places/search?query=${searchQuery}&type=${typeParam}&cost=${cost}`);
       const data = await res.json();
       setPlaces(data.places);
     } catch (err) { console.error(err); }
@@ -1233,7 +1233,7 @@ export default function App() {
 
   const fetchWeather = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/weather/current");
+      const res = await fetch("https://crowdless-30a6.onrender.com/api/weather/current");
       const data = await res.json();
       setWeather(data);
     } catch (err) { console.error(err); }
@@ -1241,7 +1241,7 @@ export default function App() {
 
   const fetchTransport = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/transport/all");
+      const res = await fetch("https://crowdless-30a6.onrender.com/api/transport/all");
       const data = await res.json();
       setTransport(data);
     } catch (err) { console.error(err); }
@@ -1275,7 +1275,7 @@ export default function App() {
     // Save vibe to backend
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://127.0.0.1:8000/api/auth/update-vibe", {
+      fetch("https://crowdless-30a6.onrender.com/api/auth/update-vibe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
