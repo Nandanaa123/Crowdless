@@ -1380,6 +1380,28 @@ export default function App() {
         <WeatherBar weather={weather} C={C} />
         <ActivitySuggestion weather={weather} onExplore={handleActivityExplore} C={C} />
 
+        {/* Trip Planner Quick Access */}
+        <div onClick={() => setShowTripPlanner(true)}
+          className="rounded-2xl p-4 mb-3 cursor-pointer transition-all duration-200"
+          style={{ background: C.bgCard, border: `2px solid ${C.border}`, boxShadow: C.shadow }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.boxShadow = `0 4px 24px rgba(14,165,233,0.2)`; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = C.shadow; }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: C.primaryGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>
+                🗺️
+              </div>
+              <div>
+                <p style={{ fontWeight: "900", fontSize: "14px", color: C.text, fontFamily: "Nunito", margin: 0 }}>AI Trip Planner</p>
+                <p style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito", margin: 0 }}>Plan a crowd-free Dubai day ✨</p>
+              </div>
+            </div>
+            <div style={{ padding: "6px 14px", borderRadius: "20px", background: C.primaryGrad, color: "white", fontFamily: "Nunito", fontWeight: "800", fontSize: "12px" }}>
+              plan now →
+            </div>
+          </div>
+        </div>
+
         {/* Map */}
         <div className="rounded-2xl p-4 mb-4" style={{ background: C.bgCard, border: `2px solid ${C.border}`, boxShadow: C.shadow }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
