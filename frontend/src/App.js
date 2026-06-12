@@ -85,31 +85,83 @@ const QUIZ_QUESTIONS = [
 
 // ── Splash Screen ──────────────────────────────────────────
 function SplashScreen({ onDone }) {
+  const [phase, setPhase] = useState(0);
+
   useEffect(() => {
-    const timer = setTimeout(onDone, 2800);
-    return () => clearTimeout(timer);
+    const t1 = setTimeout(() => setPhase(1), 400);
+    const t2 = setTimeout(() => setPhase(2), 900);
+    const t3 = setTimeout(() => setPhase(3), 1500);
+    const t4 = setTimeout(onDone, 3000);
+    return () => [t1, t2, t3, t4].forEach(clearTimeout);
   }, [onDone]);
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center z-50"
       style={{ background: "linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 50%, #06b6d4 100%)" }}>
-      <div className="flex flex-col items-center gap-4 pop-in">
-        <div className="w-28 h-28 rounded-3xl flex items-center justify-center shadow-2xl"
-          style={{ background: "rgba(255,255,255,0.2)", border: "3px solid rgba(255,255,255,0.4)" }}>
-          <span className="text-6xl">🌿</span>
+
+      {/* Background circles */}
+      <div style={{ position: "absolute", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", top: "-50px", right: "-50px" }}></div>
+      <div style={{ position: "absolute", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", bottom: "50px", left: "-30px" }}></div>
+
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+
+        {/* Logo */}
+        <div style={{
+          width: "110px", height: "110px", borderRadius: "32px",
+          background: "rgba(255,255,255,0.15)",
+          border: "3px solid rgba(255,255,255,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "56px",
+          transform: phase >= 1 ? "scale(1)" : "scale(0)",
+          opacity: phase >= 1 ? 1 : 0,
+          transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
+        }}>
+          🌿
         </div>
-        <div className="text-center">
-          <h1 style={{ fontFamily: "Pacifico, cursive", fontSize: "52px", color: "white", margin: 0 }}>CrowdLess</h1>
-          <p style={{ color: "rgba(255,255,255,0.8)", fontFamily: "Nunito", marginTop: "8px" }}>[ find your calm place ]</p>
+
+        {/* App name */}
+        <div style={{
+          textAlign: "center",
+          transform: phase >= 2 ? "translateY(0)" : "translateY(20px)",
+          opacity: phase >= 2 ? 1 : 0,
+          transition: "all 0.5s ease"
+        }}>
+          <h1 style={{ fontFamily: "Pacifico, cursive", fontSize: "52px", color: "white", margin: 0, textShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+            CrowdLess
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.8)", fontFamily: "Nunito", marginTop: "8px", fontSize: "15px", letterSpacing: "2px" }}>
+            find your calm place
+          </p>
         </div>
-        <div className="flex gap-3 mt-4">
+
+        {/* Animated dots */}
+        <div style={{
+          display: "flex", gap: "8px", marginTop: "8px",
+          opacity: phase >= 3 ? 1 : 0,
+          transition: "opacity 0.5s ease"
+        }}>
           {[0, 1, 2].map(i => (
-            <div key={i} className="w-3 h-3 rounded-full"
-              style={{ background: "rgba(255,255,255,0.8)", animation: `pulse 1.2s ease-in-out ${i * 0.3}s infinite` }}></div>
+            <div key={i} style={{
+              width: "8px", height: "8px", borderRadius: "50%",
+              background: "rgba(255,255,255,0.8)",
+              animation: phase >= 3 ? `pulse 1.2s ease-in-out ${i * 0.2}s infinite` : "none"
+            }}></div>
           ))}
         </div>
       </div>
-      <p className="absolute bottom-10 text-sm" style={{ color: "rgba(255,255,255,0.6)", fontFamily: "Nunito" }}>made for peaceful minds ✨</p>
+
+      {/* Bottom tagline */}
+      <p style={{
+        position: "absolute", bottom: "40px",
+        color: "rgba(255,255,255,0.5)",
+        fontFamily: "Nunito", fontSize: "12px",
+        letterSpacing: "3px", textTransform: "uppercase",
+        opacity: phase >= 3 ? 1 : 0,
+        transition: "opacity 0.8s ease"
+      }}>
+        made for peaceful minds ✨
+      </p>
     </div>
   );
 }
@@ -446,49 +498,82 @@ function CrowdBadge({ color, label }) {
 
 // ── Place Card ─────────────────────────────────────────────
 function PlaceCard({ place, onClick, C }) {
+  const typeIcons = {
+    cafe: "☕", park: "🌳", beach: "🏖️", museum: "🏛️",
+    restaurant: "🍽️", gym: "💪", mall: "🛍️", wellness: "💆"
+  };
+
+  const costStyles = {
+    free: { bg: "#dcfce7", text: "#166534" },
+    budget: { bg: "#fef9c3", text: "#854d0e" },
+    moderate: { bg: "#fff7ed", text: "#9a3412" },
+    premium: { bg: "#fce7f3", text: "#9d174d" },
+  };
+  const cs = costStyles[place.cost] || costStyles.budget;
+
   return (
     <div onClick={() => onClick(place)}
-      className="rounded-2xl p-5 cursor-pointer transition-all duration-200 fade-in"
+      className="rounded-2xl cursor-pointer transition-all duration-200 fade-in overflow-hidden"
       style={{ background: C.bgCard, border: `2px solid ${C.border}`, boxShadow: C.shadow }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.boxShadow = `0 4px 24px rgba(14,165,233,0.2)`; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = C.shadow; }}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          <h3 style={{ fontWeight: "900", fontSize: "16px", color: C.text, fontFamily: "Nunito", margin: 0 }}>{place.name}</h3>
-          <p style={{ fontSize: "12px", color: C.textLight, fontFamily: "Nunito", margin: "2px 0 0 0" }}>📍 {place.address}</p>
+      onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.boxShadow = `0 4px 24px rgba(14,165,233,0.2)`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = C.shadow; e.currentTarget.style.transform = "translateY(0)"; }}>
+
+      {/* Top color bar based on crowd */}
+      <div style={{
+        height: "4px",
+        background: place.crowd_color === "green" ? "linear-gradient(90deg, #22c55e, #86efac)" :
+          place.crowd_color === "yellow" ? "linear-gradient(90deg, #eab308, #fde047)" :
+            "linear-gradient(90deg, #ef4444, #fca5a5)"
+      }}></div>
+
+      <div style={{ padding: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: C.bgDeep, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
+              {typeIcons[place.type] || "📍"}
+            </div>
+            <div>
+              <h3 style={{ fontWeight: "900", fontSize: "15px", color: C.text, fontFamily: "Nunito", margin: 0 }}>{place.name}</h3>
+              <p style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito", margin: "2px 0 0 0" }}>📍 {place.address}</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", marginLeft: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "3px", padding: "3px 8px", borderRadius: "8px", background: C.bgDeep }}>
+              <span style={{ fontSize: "11px" }}>⭐</span>
+              <span style={{ fontSize: "12px", fontWeight: "900", color: C.text, fontFamily: "Nunito" }}>{place.rating}</span>
+            </div>
+            {place.cost_label && (
+              <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "8px", fontWeight: "800", background: cs.bg, color: cs.text, fontFamily: "Nunito" }}>
+                {place.cost_label}
+              </span>
+            )}
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 8px", borderRadius: "10px", background: C.bgDeep, border: `1.5px solid ${C.border}`, marginLeft: "8px" }}>
-          <span>⭐</span>
-          <span style={{ fontSize: "13px", fontWeight: "800", color: C.text, fontFamily: "Nunito" }}>{place.rating}</span>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+          <CrowdBadge color={place.crowd_color} label={place.crowd_label} />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito" }}>⏱ {place.wait_time}</span>
+            <span style={{ fontSize: "11px", color: C.primary, fontFamily: "Nunito", fontWeight: "800" }}>→</span>
+          </div>
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 10px", borderRadius: "10px", background: C.bgDeep, marginBottom: place.top_items?.length > 0 ? "8px" : "0" }}>
+          <span style={{ fontSize: "11px" }}>🕐</span>
+          <span style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito" }}>Best time:</span>
+          <span style={{ fontSize: "11px", fontWeight: "800", color: C.text, fontFamily: "Nunito" }}>{place.best_time}</span>
+        </div>
+
+        {place.top_items?.length > 0 && (
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {place.top_items.map((item, i) => (
+              <span key={i} style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", background: C.bgDeep, color: C.textMid, border: `1px solid ${C.border}`, fontFamily: "Nunito", fontWeight: "700" }}>
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
-        <CrowdBadge color={place.crowd_color} label={place.crowd_label} />
-        <span style={{ fontSize: "12px", color: C.textLight, fontFamily: "Nunito" }}>⏱ {place.wait_time}</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px" }}>
-        <span style={{ fontSize: "11px", color: C.textLight, fontFamily: "Nunito" }}>best time:</span>
-        <span style={{ fontSize: "11px", fontWeight: "800", color: C.text, fontFamily: "Nunito" }}>{place.best_time}</span>
-      </div>
-      {place.cost_label && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
-          <span style={{ fontSize: "12px", fontWeight: "800", fontFamily: "Nunito", color: C.text }}>
-            {place.cost_label}
-          </span>
-          <span style={{ fontSize: "11px", fontFamily: "Nunito", color: C.textLight }}>
-            {place.cost_range}
-          </span>
-        </div>
-      )}
-      {place.top_items?.length > 0 && (
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
-          {place.top_items.map((item, i) => (
-            <span key={i} style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", background: C.bgDeep, color: C.textMid, border: `1px solid ${C.border}`, fontFamily: "Nunito", fontWeight: "700" }}>
-              {item}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
